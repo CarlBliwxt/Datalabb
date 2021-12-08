@@ -91,6 +91,45 @@ def React(phi,T_i,P):
   hDiff_J__kg=hAfter_J__kg-hBefore_J__kg
   return hDiff_J__kg,tad,xeq
 
+def React1(phi,T_i,P):
+      #Funktion som beräknar entalpiförändringen, adiabatiska flamtemperaturen och sammansättningen på produktgaserna med hjälp av Cantera
+  #Den använder följande indata
+  #
+  # phi         Relativt bränsle/luft-förhållande  
+  # T_i         Temperatur före förbränning
+  # P           Tryck 
+
+  carbon = ct.Solution('graphite.xml')
+  mix_phases = [(gas, 1.0), (carbon, 0.0)]
+
+
+  #Sätt relativa bränsle-luft-förhållandet i gasen
+  gas.set_equivalence_ratio(phi, 'CH3OH', 'O2:1.0, N2:3.76')
+  mix = ct.Mixture(mix_phases)
+
+  #Sätt temperatur och tryck för blandning går till jämvikt
+  mix.T = T_i
+  mix.P = P
+
+  #Entalpin för blandningen före reaktion (=innan blandningen gått till jämvikt
+  hBefore_J__kg=mix.phase(0).h
+
+  #Sätt blandningen till jämvikt
+  mix.equilibrate('HP', solver='gibbs', max_steps=1000)
+  
+  #Läs av temperature = Adiabatiska flamtemperaturen om alla reaktioner får gå till jämvikt (=mer korrekt än att anta att bara CO2 och H2O bildas)
+  tad = mix.T
+  #Sammansättningen på de bildade gaserna
+  xeq = mix.species_moles
+  #Läs av vid 298.15 K för att få bildningsentalpin (alltså entalpin exklusive den sensibla entalpin)
+  mix.T=298.15
+  #Entalpin efter reaktionen
+  hAfter_J__kg=mix.phase(0).h
+  #Entalpiförändringen
+  hDiff_J__kg=hAfter_J__kg-hBefore_J__kg
+  return hBefore_J__kg, hAfter_J__kg
+
+
 
 
 

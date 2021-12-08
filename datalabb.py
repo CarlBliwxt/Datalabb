@@ -116,7 +116,6 @@ for i in range(npoints):
 
   #Beräkna den frigjorda
   heatreleased_J__kg=-hDiff_J__kg*(1+AFratio)
-  #heatreleased_J__kg = ...
 
   #Andel av energin i bränslet (värmevärdet) som omvandlats till värme
   #heat_fraction=...

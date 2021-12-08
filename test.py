@@ -1,7 +1,6 @@
 #Import modules and define useful functions
 import math
-import matplotlib.pyplot as plt
-from numpy.lib.stride_tricks import DummyArray
+import matplotlib as plt
 import pandas as pd 
 
 import cantera as ct
@@ -112,7 +111,7 @@ for i in range(npoints):
   hDiff_J__kg,T_ad_Cantera[i],forbr.Composition[:,i]=forbr.React(phi[i],T,P)
   
 
-  #Totala flödet + luftfcalödet + bränsleflödet. Bränsleflödet är per definition luftflödet / luft/bränsle-förhållandet.
+  #Totala flödet =  luftfcalödet + bränsleflödet. Bränsleflödet är per definition luftflödet / luft/bränsle-förhållandet.
   totalFlowrate_kg__s = airrate_kg__s + airrate_kg__s/AFratio 
 
   #Beräkna den effekt med vilken värme producerats under processen
@@ -123,17 +122,22 @@ for i in range(npoints):
   heatreleased_J__kg=-hDiff_J__kg*(1+AFratio)
 
   #Andel av energin i bränslet (värmevärdet) som omvandlats till värme
-  heat_fraction = -heatproduction_J__s/(entalpi_innan)
+  temp1 = forbr.React1(phi[i],T,P)
+  before = temp1[0]
+  after = temp1[1]
+  heat_fraction = heatproduction_J__s/(before + after)
+
   print(heat_fraction)
   
   #Resten kvar som kemisk energi hos gaserna som bildats
-  #chemical_fraction=...
+  chemical_fraction=...
   
   #Beräkna hur mycket entalpin hos vattnet ökat (= producerad värme / vattenflödet)
-  #heat_added_J__kg=...  
+  heat_added_J__kg = heat_added_J__kg/waterrate_kg__s
 
   #Beräkna entalpin för punkt 3 i Rankinecykeln
-  #h3 = ...
+  w.PQ = p_max, 1.0
+  h3 = w.h
   
   #Sätt det nya tillståndet för punkt 3
   w.HP = h3,p_max
@@ -143,11 +147,12 @@ for i in range(npoints):
   turbine_work = rankine.expand(w, p1, eta_turbine)
 
   # Beräkna effektiviteten för Rankinecykeln
-  eff = (turbine_work - pump_work)/heat_added_J__kg
-  #eff = ...
+  eff =(turbine_work - pump_work)/heat_added_J__kg
+  
+  
 
   #Lägg till värden till vektorer. Multiplicera med 100 (för att plotta värden som procent)
-  effs.append(eff*100)
-  heats.append(heat_fraction*100)
-  chemicals.append(chemical_fraction*100)
+  #effs.append(eff*100)
+  #heats.append(heat_fraction*100)
+  #chemicals.append(chemical_fraction*100)
 
