@@ -1,14 +1,12 @@
 #Import modules and define useful functions
 import math
 import matplotlib.pyplot as plt
-from numpy.lib.stride_tricks import DummyArray
-import pandas as pd 
 
 import cantera as ct
 import numpy as np
 import sys
 import csv
-from rankinefunktioner import printState 
+from rankinefunktioner import printState
 import rankinefunktioner as rankine
 import forbranningsfunktioner as forbr
 
@@ -38,6 +36,9 @@ pump_work = rankine.pump(w, p_max, eta_pump)
 h2 = w.h
 w.PQ = p_max, 1.0
 print(1,w)
+
+#Punkt 3 
+
 ####### SLUT RANKINE CYCLE ###############################################
 
 ####### SKAPA VEKTORER SOM FYLLS MED DATA #################################
@@ -49,8 +50,8 @@ heats=[]
 chemicals=[]
 
 npoints = 50
-lower_bound = float(0.1)
-higher_bound = float(0.9)
+lower_bound = float(input("Enter minimum equivalence ratio:"))
+higher_bound = float(input("Enter maximum equivalence ratio:"))
 
 # fill array phi (the symbol for equivalen ratio) with values from minimum to maximum equivalence ratio
 phi = np.linspace(lower_bound, higher_bound, npoints)
@@ -82,49 +83,43 @@ airrate_kg__s=10;
 
 
 #Luft/bränsle-förhållande
-AFratio = 3/2
+#AFratio=...
 
 #Värmevärdet (för senare jämförelse med vad energin hamnar)
-delta_hc_J__kg = np.zeros(npoints)
+#delta_hc_J__kg,dummy=...
 
 
 for i in range(npoints):
   #Visa att beräkningarna pågår (att datorn inte hängt sig
-  #print('Calculating for phi = {0:12.4g}'.format(phi[i]))
- 
-  
+  print('Calculating for phi = {0:12.4g}'.format(phi[i]))
+
   #Beräkna adiabatiska flamtemperaturen "för hand" (som ni gjort tidigare under kursen)
   #Första variablen kallad "dummy" eftersom vi inte använder den (värmevärdet)
   #Beräknar bara för relativa bränsle/luft-värden som är lika med eller under ett
   #eftersom reaktionsformeln bara är korrekt för dessa
   if (phi[i]<=1):
-    temp = forbr.LHVandTAD(T, phi[i])
-    delta_hc_J__kg[i] = temp[0]
-    T_ad_denna = temp[1]
     #Beräkna adiabatiska flamtemperaturen
     #dummy,T_ad_denna=...
-  
+
     #Lägg till i vektorer för att kunna plotta senare
     phi_luftoverskott.append(phi[i])
     T_ad.append(T_ad_denna);
 
-#Beräkna entalpiförändring, adiabatisk flamtemperatur och gassammansättning vid aktuellt relativt bränsle/luftförhållande med hjälp av Cantera
+  #Beräkna entalpiförändring, adiabatisk flamtemperatur och gassammansättning vid aktuellt relativt bränsle/luftförhållande med hjälp av Cantera
   hDiff_J__kg,T_ad_Cantera[i],forbr.Composition[:,i]=forbr.React(phi[i],T,P)
   
-
-  #Totala flödet + luftfcalödet + bränsleflödet. Bränsleflödet är per definition luftflödet / luft/bränsle-förhållandet.
-  totalFlowrate_kg__s = airrate_kg__s + airrate_kg__s/AFratio 
+  #Totala flödet + luftflödet + bränsleflödet. Bränsleflödet är per definition luftflödet / luft/bränsle-förhållandet.
+  #totalFlowrate_kg__s= ...
 
   #Beräkna den effekt med vilken värme producerats under processen
-  temp = forbr.React(phi[i],T, P)
-  heatproduction_J__s = temp[0]
+  #heatproduction_J__s = ...
 
   #Beräkna den frigjorda
   heatreleased_J__kg=-hDiff_J__kg*(1+AFratio)
+  #heatreleased_J__kg = ...
 
   #Andel av energin i bränslet (värmevärdet) som omvandlats till värme
-  heat_fraction = -heatproduction_J__s/(entalpi_innan)
-  print(heat_fraction)
+  #heat_fraction=...
   
   #Resten kvar som kemisk energi hos gaserna som bildats
   #chemical_fraction=...
@@ -151,3 +146,51 @@ for i in range(npoints):
   heats.append(heat_fraction*100)
   chemicals.append(chemical_fraction*100)
 
+
+#Presentera resultaten i figurer
+box = dict(facecolor='yellow', pad=5, alpha=0.2)
+
+#Figuren innehåller via subplottar (adiatisk flamtemperatur, 
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
+fig.subplots_adjust(left=0.2, wspace=0)
+
+ax1.set_xlabel('Rel. bränsle/luft-förh.')
+ax1.set_ylabel('Adiabatisk flamtemperatur (K)')
+ax1.plot(phi_luftoverskott, T_ad, label='"För hand"')
+ax1.plot(phi,T_ad_Cantera,label='Cantera')
+ax1.legend(loc=0)
+
+ax2.plot(phi, forbr.Composition[forbr.gas.species_index('CO2'),:],label='CO2')
+#Komplettera/ersätt med andra relevanta gaser enligt samma format (d.v.s. ersätt 'O2' med aktuell gasformel)
+#För körningen för gasifiering välj gaser som är viktiga för sammansättningen på syngas
+#För körningen för förbränning välj gaser som är viktiga föroreningar
+
+ax2.set_yscale('log')
+ax2.legend(loc=0)
+ax2.set_xlabel('Rel. bränsle/luft-förh.')
+ax2.set_ylabel('Concentration')
+
+ax3.plot(phi, heats,label='Värme')
+ax3.plot(phi, chemicals,label='Kemisk energi')
+ax3.legend(loc=0)
+ax3.set_xlabel('Rel. bränsle/luft-förh.')
+ax3.set_ylabel('Fördelning (%)')
+    
+ax4.plot(phi, effs)
+ax4.legend(loc=0)
+ax4.set_xlabel('Rel. bränsle/luft-förh.')
+ax4.set_ylabel('Elverkningsgrad')
+plt.tight_layout()
+
+plt.show()
+
+
+################ ANTECKNA RESULTATEN AV DINA KÖRNINGAR NEDAN (SOM KOMMENTARER) ####################
+
+#ANTECKNINGAR KÖRNING GASIFIERING
+##VILKA RELATIVA BRÄNSLE/LUFT-FÖRHÅLLANDE HAR DU KÖRT MELLAN?
+##SAMMANFATTA KORTFATTAT RESULTATET AV KÖRNINGEN (NÅGRA MENINGAR). NÄMN VILKA GASER DU TITTAT PÅ
+
+#ANTECKNINGAR KÖRNING FÖRBRÄNNING
+##VILKA RELATIVA BRÄNSLE/LUFT-FÖRHÅLLANDE HAR DU KÖRT MELLAN?
+##SAMMANFATTA KORTFATTAT RESULTATET AV KÖRNINGEN (NÅGRA MENINGAR). NÄMN VILKA GASER DU TITTAT PÅ
