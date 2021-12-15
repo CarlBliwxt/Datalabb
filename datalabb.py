@@ -72,9 +72,6 @@ P = 101325.0
 waterrate_kg__s=10
 #Luftflödet (kg/s)
 airrate_kg__s=10;
-
-
-
 ########## VARIERA RELATIVA LUFT/BRÄNSLE-FÖRHÅLLANDEN ##########################
 #                                                                              #
 # Det är i denna delen ni ska genomföra ändringar                              #

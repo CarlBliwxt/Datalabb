@@ -82,16 +82,16 @@ airrate_kg__s = 10;
 AFratio = 6.5
 
 #Värmevärdet (för senare jämförelse med vad energin hamnar)
-temp = forbr.LHVandTAD(T, 1)
-delta_hc_J__kg = temp[0]
+temp = forbr.LHVandTAD(T, 1) # Temporär variabel som lagrar en array
+delta_hc_J__kg = temp[0] # Tar ut lägre värmevärdet ur arrayen
 
 for i in range(npoints):
   #Visa att beräkningarna pågår (att datorn inte hängt sig
   #print('Calculating for phi = {0:12.4g}'.format(phi[i]))
   if (phi[i] <= 1): 
     #Beräknar adiabatiska flamtemperaturen
-    temp = forbr.LHVandTAD(T, phi[i])
-    T_ad_denna = temp[1]
+    temp = forbr.LHVandTAD(T, phi[i]) # adiabatisk flamtemperatur med varierande phi
+    T_ad_denna = temp[1] # Tar ut adiabatisk flamtemperatur ur arraye. 
     #Lägg till i arrayen för att kunna plotta senare
     phi_luftoverskott.append(phi[i])
     T_ad.append(T_ad_denna);
@@ -113,6 +113,7 @@ for i in range(npoints):
   #Andel av energin i bränslet (värmevärdet) som omvandlats till värme
   heat_fraction = heatreleased_J__kg/delta_hc_J__kg
   #Resten kvar som kemisk energi hos gaserna som bildats
+  #Total energin är 100 procennt och dessa fördelas mellan kemisk och värme
   chemical_fraction = 1 - heat_fraction
   
   #Beräkna hur mycket entalpin hos vattnet ökat (= producerad värme / vattenflödet)
@@ -141,7 +142,7 @@ box = dict(facecolor='yellow', pad=5, alpha=0.2)
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2)
 fig.subplots_adjust(left=0.2, wspace=0)
 ax1.set_xlabel('Rel. bränsle/luft-förh.')
-ax1.set_ylabel('Adiabatisk flamtemperatur (K)')
+ax1.set_ylabel('Adiabatisk flamtemperatur (K)')   
 ax1.plot(phi_luftoverskott, T_ad, label='"För hand"')
 ax1.plot(phi,T_ad_Cantera, label='Cantera')
 ax1.legend(loc=0)
@@ -152,25 +153,25 @@ ax1.legend(loc=0)
 # 0-5 CH4 
 # 5-15 C02
 
-if higher_bound <= 1 : 
+if higher_bound >= 2 :  # Förgasning, syngas studeras
   fig.suptitle('Förgasning')
   ax2.plot(phi, forbr.Composition[forbr.gas.species_index('CO2'),:],label='CO2')
   ax2.plot(phi, forbr.Composition[forbr.gas.species_index('CO'),:],label='CO')
   ax2.plot(phi, forbr.Composition[forbr.gas.species_index('H2'),:],label='H2')
-  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('H2O'),:],label='H20')
+  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('H2O'),:],label='H2O')
 
 #Komplettera/ersätt med andra relevanta gaser enligt samma format (d.v.s. ersätt 'O2' med aktuell gasformel)
-else: 
+else:  # Förbränning 
   fig.suptitle('Förbränning')
   ax2.plot(phi, forbr.Composition[forbr.gas.species_index('CO2'),:],label='CO2')
   ax2.plot(phi, forbr.Composition[forbr.gas.species_index('O2'),:],label='O2')
-  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('N2'),:],label='N2')
-  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('H2O'),:],label='H2O')
+  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('NO2'),:],label='NO2')
+  ax2.plot(phi, forbr.Composition[forbr.gas.species_index('NO'),:],label='NO')
+
 ax2.set_yscale('log')
 ax2.legend(loc=0)
 ax2.set_xlabel('Rel. bränsle/luft-förh.')
 ax2.set_ylabel('Concentration')
-
 
 ax3.plot(phi, heats,label='Värme')
 ax3.plot(phi, chemicals,label='Kemisk energi')
@@ -181,6 +182,7 @@ ax4.plot(phi, effs)
 ax4.legend(loc=0)
 ax4.set_xlabel('Rel. bränsle/luft-förh.')
 ax4.set_ylabel('Elverkningsgrad')
+
 plt.tight_layout()
 
 plt.show()
